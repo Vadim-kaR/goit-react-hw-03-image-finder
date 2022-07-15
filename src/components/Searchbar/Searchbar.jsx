@@ -15,7 +15,7 @@ class Searchbar extends Component {
     query: '',
   };
 
-  hendelFormSubmit = () => {
+  handleFormSubmit = () => {
     const { onSubmit } = this.props;
     const { query } = this.state;
 
@@ -24,12 +24,12 @@ class Searchbar extends Component {
       return;
     }
     onSubmit(query);
-    setTimeout(() => {
-      toast.success(`we found: ${this.props.totalResults} results`);
-    }, 2000);
+    this.setState({ query: '' });
+    //Убрал setTimeout в итоге первый тост null, второй номально.
+    toast.success(`we found: ${this.props.totalResults} results`);
   };
 
-  hendelFormChange = e => {
+  handleFormChange = e => {
     const newQuery = e.currentTarget.name.value;
     this.setState({ query: newQuery });
   };
@@ -37,14 +37,15 @@ class Searchbar extends Component {
   render() {
     return (
       <SearchbarHeader>
-        <Formik initialValues={{ name: '' }} onSubmit={this.hendelFormSubmit}>
-          <SearchForm onChange={this.hendelFormChange}>
+        <Formik initialValues={{ name: '' }} onSubmit={this.handleFormSubmit}>
+          <SearchForm onChange={this.handleFormChange}>
             <SearchBtn type="submit">
               <ImSearch size={24} />
             </SearchBtn>
             <Input
               type="text"
               name="name"
+              value={this.state.query}
               autoComplete="off"
               autoFocus
               placeholder="Search images and photos"
@@ -58,6 +59,8 @@ class Searchbar extends Component {
 
 Searchbar.propTypes = {
   totalResults: PropTypes.number,
+  onSubmit: PropTypes.func,
+  query: PropTypes.string,
 };
 
 export { Searchbar };

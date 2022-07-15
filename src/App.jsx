@@ -21,45 +21,45 @@ class App extends Component {
     results: null,
   };
 
-  async componentDidUpdate(prevProps, prevState) {
+  async componentDidUpdate(_, prevState) {
     const { query, page } = this.state;
     const oldQuery = prevState.query;
     const prevPage = prevState.page;
 
     if (query !== oldQuery || page !== prevPage) {
       try {
-        this.setState({ loading: true });
+        this.setState({ loading: true }); //Я добавлял "images: []" сюда
         const { hits, total } = await getImages(query, page);
         const totalPages = Math.round(total / 12);
-        setTimeout(() => {
-          this.setState(prev => ({
-            images: [...prev.images, ...hits],
-            loading: false,
-            pagesAmount: totalPages,
-            results: total,
-          }));
-        }, 1000);
+
+        this.setState(prev => ({
+          images: [...prev.images, ...hits],
+          loading: false,
+          pagesAmount: totalPages,
+          results: total,
+        }));
       } catch (error) {
         console.log(error);
       }
     }
   }
 
-  hendelFormSubmit = query => {
+  handleFormSubmit = query => {
+    // Если убрать "images: []"" тут и поствить в componentDidUpdate то при каждом запросе будет обнуляться массив картинок
+    // Следовательно к пустому массиву будет распыление нового (при нажатии на 'LoadMore'), в итоге не будет длинного списка картинок.
     this.setState({
       query,
       images: [],
       page: 1,
     });
   };
-
-  hendelButtonLoadMore = () => {
+  handleButtonLoadMore = () => {
     this.setState(prevState => ({
       page: prevState.page + 1,
     }));
   };
 
-  hendelModalClose = () => {
+  handleModalClose = () => {
     this.setState({ currentImage: null });
   };
 
@@ -73,11 +73,12 @@ class App extends Component {
     return (
       <AppContainer>
         {currentImage && (
-          <Modal onClose={this.hendelModalClose} data={currentImage} />
+          <Modal onClose={this.handleModalClose} data={currentImage} />
         )}
-        <Searchbar onSubmit={this.hendelFormSubmit} totalResults={results} />
+        <Searchbar onSubmit={this.handleFormSubmit} totalResults={results} />
         <ToastContainer autoClose={3000} />
 
+        {/* !loading && images && ... ты это имел ввиду? */}
         {images && (
           <ImageGallery
             query={query}
@@ -87,7 +88,7 @@ class App extends Component {
         )}
         {loading && <Loader />}
         {page <= pagesAmount && (
-          <LoadMoreBtn loadMore={this.hendelButtonLoadMore} />
+          <LoadMoreBtn loadMore={this.handleButtonLoadMore} />
         )}
       </AppContainer>
     );
