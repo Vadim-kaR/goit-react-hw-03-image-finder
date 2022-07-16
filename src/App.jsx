@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AppContainer } from 'components/AppContainer/AppContainer.styled';
 
@@ -27,29 +27,31 @@ class App extends Component {
     const prevPage = prevState.page;
 
     if (query !== oldQuery || page !== prevPage) {
-      try {
-        this.setState({ loading: true }); //Я добавлял "images: []" сюда
-        const { hits, total } = await getImages(query, page);
-        const totalPages = Math.round(total / 12);
+      this.setState({ loading: true });
+      const { hits, total } = await getImages(query, page, this.handleError);
+      const totalPages = Math.round(total / 12);
 
-        this.setState(prev => ({
-          images: [...prev.images, ...hits],
-          loading: false,
-          pagesAmount: totalPages,
-          results: total,
-        }));
-      } catch (error) {
-        console.log(error);
+      this.setState(({ images }) => ({
+        images: page > 1 ? [...images, ...hits] : hits,
+        loading: false,
+        pagesAmount: totalPages,
+        results: total,
+      }));
+
+      if (page === 1) {
+        toast.success(`we found: ${total} results`);
       }
     }
   }
 
+  handleError = error => {
+    toast.error(`${error.message}`);
+    this.setState({ loading: false });
+  };
+
   handleFormSubmit = query => {
-    // Если убрать "images: []"" тут и поствить в componentDidUpdate то при каждом запросе будет обнуляться массив картинок
-    // Следовательно к пустому массиву будет распыление нового (при нажатии на 'LoadMore'), в итоге не будет длинного списка картинок.
     this.setState({
       query,
-      images: [],
       page: 1,
     });
   };
@@ -78,7 +80,6 @@ class App extends Component {
         <Searchbar onSubmit={this.handleFormSubmit} totalResults={results} />
         <ToastContainer autoClose={3000} />
 
-        {/* !loading && images && ... ты это имел ввиду? */}
         {images && (
           <ImageGallery
             query={query}
